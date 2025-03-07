@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // #################### Définition des composables inclus dans les pages ####################
-// ------------------------------ Définition du composable DisplayLogo ------------------------------
+// ---------------------------- Définition du composable DisplayLogo ----------------------------
 @Composable
 fun DisplayLogo(platform : Platforms){
     AsyncImage(
@@ -115,11 +115,29 @@ fun DisplayLogo(platform : Platforms){
     )
 }
 
+// --------------------------- Définition du composable FavoriteButton ---------------------------
+@Composable
+fun FavoriteButton(game : Games, favoriteGames: MutableState<Set<Long>>){
+    // Définition de l'état du boutton favori
+    val isFavorite = favoriteGames.value.contains(game.id)
+    IconButton(onClick = {
+        if(isFavorite){
+            favoriteGames.value -= game.id
+        }else{
+            favoriteGames.value += game.id
+        }
+    })
+    {
+        Icon(
+            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+            contentDescription = "Mettre en favori / Enlever des favoris"
+        )
+    }
+}
+
 // ------------------------------ Définition du composable GameCard ------------------------------
 @Composable
 fun GameCard(game : Games, navController: NavController, favoriteGames : MutableState<Set<Long>>){
-    // Définition de l'état du boutton favori
-    val isFavorite = favoriteGames.value.contains(game.id)
 
     Row(verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -148,24 +166,12 @@ fun GameCard(game : Games, navController: NavController, favoriteGames : Mutable
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
         }
-        IconButton(onClick = {
-            if(isFavorite){
-                favoriteGames.value -= game.id
-            }else{
-                favoriteGames.value += game.id
-            }
-        })
-        {
-            Icon(
-                imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                contentDescription = "Mettre en favori / Enlever des favoris"
-            )
-        }
+        FavoriteButton(game, favoriteGames)
     }
 }
 
 // ############################## Définition des différentes pages ##############################
-// ------------------------------ Définition du composable HomeScreen ------------------------------
+// ----------------------------- Définition du composable HomeScreen -----------------------------
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -250,7 +256,7 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
     }
 }
 
-// ------------------------------ Définition du composable GameScreen ------------------------------
+// ----------------------------- Définition du composable GameScreen -----------------------------
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableState<Set<Long>>) {
@@ -261,7 +267,6 @@ fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableSta
     val genre = IGDB.genres.filter{ it.id in (game?.genres ?: listOf(String))}.joinToString(", ") {it.name}
     val platforms = IGDB.platforms.filter{ it.id in game?.platforms!!}
     val summary = game?.summary ?: ""
-    val isFavorite = favoriteGames.value.contains(id)
 
     Scaffold(
         // Paramètrage de la top bar
@@ -279,21 +284,7 @@ fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableSta
                         )
                     }
                 },
-                actions = {
-                    IconButton(onClick = {
-                        if(isFavorite){
-                            favoriteGames.value -= id
-                        }else{
-                            favoriteGames.value += id
-                        }
-                    })
-                    {
-                        Icon(
-                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = "Mettre en favori / Enlever des favoris"
-                        )
-                    }
-                }
+                actions = { IGDB.games.find{id==it.id}?.let { FavoriteButton(it, favoriteGames) } }
             )
         },
         modifier = Modifier.fillMaxSize())
