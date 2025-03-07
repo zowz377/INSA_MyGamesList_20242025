@@ -124,7 +124,7 @@ fun GameCard(game : Games, navController: NavController){
             model = "https:"+IGDB.covers.find{game.cover==it.id}?.url,
             contentDescription = "image",
             modifier = Modifier.padding(15.dp))
-        Column{
+        Column(modifier = Modifier.padding(10.dp)){
             Text(
                 game.name,
                 fontSize = 20.sp,
@@ -150,7 +150,7 @@ fun HomeScreen(navController: NavHostController) {
     var searchText by rememberSaveable { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
 
-    // Filter de recherche
+    // Filtre de recherche
     val filteredGames = IGDB.games.filter { game ->
             game.name.contains(searchText, ignoreCase = true) ||
                     IGDB.genres
@@ -160,6 +160,8 @@ fun HomeScreen(navController: NavHostController) {
                         .filter { game.platforms.contains(it.id)}
                         .find {it.name.contains(searchText, ignoreCase = true)} != null
     }
+
+
 
     Scaffold(topBar = {
         // Paramètre la top bar
@@ -188,32 +190,40 @@ fun HomeScreen(navController: NavHostController) {
                     .fillMaxWidth()
                     .padding(innerPadding)
             )
-        }
-
-        if (filteredGames.isNotEmpty()) {
-            // Permet l'affichage en liste scrollable de toutes des games cards
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .offset(y = if (isSearchVisible) 60.dp else 0.dp)
-            )
-            { // Fait un for each auto
-                items(filteredGames.size) { // Calcule le nombre de jeux qui correspondent à la recherche
-                        index -> // Incrémente jusqu'au nombre précédant
-                    val game = filteredGames[index]
+            if (filteredGames.isNotEmpty()) {
+                // Permet l'affichage en liste scrollable des games cards filtrées
+                LazyColumn(
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .offset(y = if (isSearchVisible) 60.dp else 0.dp)
+                )
+                { // Fait un for each auto
+                    items(filteredGames.size) { // Calcule le nombre de jeux qui correspondent à la recherche
+                            index -> // Incrémente jusqu'au nombre précédant
+                        val game = filteredGames[index]
+                        GameCard(game, navController)
+                    }
+                }
+            }else{
+                Text(
+                    text = "No match :(",
+                    modifier = Modifier
+                        .padding(innerPadding)
+                        .offset(y = 350.dp)
+                        .fillMaxWidth()
+                        .wrapContentSize(Alignment.Center),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }else{
+            // Permet l'affichage en liste scrollable de toutes les games cards
+            LazyColumn (modifier = Modifier.padding(innerPadding)){
+                items(IGDB.games.size){
+                        index ->
+                    val game =IGDB.games[index]
                     GameCard(game, navController)
                 }
             }
-        }else{
-            Text(
-                text = "No match :(",
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(15.dp)
-                    .fillMaxWidth()
-                    .wrapContentSize(Alignment.Center),
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
