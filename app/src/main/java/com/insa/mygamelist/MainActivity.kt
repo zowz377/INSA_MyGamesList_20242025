@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -86,6 +87,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
 
             // Création d'une liste des favoris qui est passée en paramètre de toutes nos pages
+            // Stockés via leurs id
             val favoriteGames = remember { mutableStateOf(setOf<Long>()) }
 
             MyGamesListTheme {
@@ -138,7 +140,7 @@ fun FavoriteButton(game : Games, favoriteGames: MutableState<Set<Long>>){
 // ------------------------------ Définition du composable GameCard ------------------------------
 @Composable
 fun GameCard(game : Games, navController: NavController, favoriteGames : MutableState<Set<Long>>){
-
+    // Mise en forme de 3 blocs les uns à côté des autres : la couverture du jeu, ses infos et le boutton favori
     Row(verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .padding(15.dp)
@@ -148,24 +150,29 @@ fun GameCard(game : Games, navController: NavController, favoriteGames : Mutable
             .background(Color(184, 184, 187, 255))
             .clickable { navController.navigate(MainActivity.GameRoute(game.id)) }
     ) {
+        // Affichage de la couverture du jeu
         AsyncImage(
             model = "https:"+IGDB.covers.find{game.cover==it.id}?.url,
             contentDescription = "image",
-            modifier = Modifier.padding(15.dp))
+            modifier = Modifier.padding(15.dp)
+        )
+        // Affichage des infos du jeu
         Column(modifier = Modifier.padding(10.dp).width(230.dp)){
-            Text(
+            Text(   // Affichage du titre du jeu
                 game.name,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 style = TextStyle(textDecoration = TextDecoration.Underline)
             )
+            // récupération des genres et mise en forme du
             val mygenres = "Genres : " + IGDB.genres.filter{ it.id in game.genres }.joinToString(", ") { it.name }
-            Text(
+            Text(   // Affichage des genres du jeu
                 text = mygenres,
                 fontSize = 20.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis)
         }
+        // Affichage du boutton favori
         FavoriteButton(game, favoriteGames)
     }
 }
@@ -179,6 +186,7 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
     // Définition des les états des bouttons
     var searchText by rememberSaveable { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+    var displayFavorite by rememberSaveable { mutableStateOf(false) }
 
     // Filtre de recherche par nom, genre et plateforme compatible
     val filteredGames = IGDB.games.filter { game ->
@@ -199,6 +207,12 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
                 titleContentColor = Color.Black,),
             title = { Text("My Games List") },
             actions = {
+                IconButton(onClick = { displayFavorite = !displayFavorite }) {
+                    Icon(
+                        imageVector = if(displayFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Appliquer le filtre favoris"
+                    )
+                }
                 IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
                     Icon(
                         imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
@@ -208,6 +222,17 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
             }
         )
     }, modifier = Modifier.fillMaxSize()) { innerPadding ->
+        // Sélection des jeux à afficher selon les filtres
+        val displayList = when {
+            isSearchVisible && searchText.isNotEmpty() && displayFavorite ->
+                filteredGames.filter { it.id in favoriteGames.value } // Filtre favoris + Recherche
+            isSearchVisible && searchText.isNotEmpty() ->
+                filteredGames // Pas de filtre favoris + Recherche
+            displayFavorite ->
+                IGDB.games.filter { it.id in favoriteGames.value } // Filtre favoris + Pas Recherche
+            else ->
+                IGDB.games // Pas de filtre favoris + Pas Recherche
+        }
         // Affichage conditionnel de la barre de recherche
         if (isSearchVisible) {
             TextField(
@@ -218,43 +243,33 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
                     .fillMaxWidth()
                     .padding(innerPadding)
             )
-            if (filteredGames.isNotEmpty()) {
-                // Permet l'affichage en liste scrollable des games cards filtrées
-                LazyColumn(
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .offset(y = if (isSearchVisible) 60.dp else 0.dp)
-                )
-                { // Fait un for each auto
-                    items(filteredGames.size) { // Calcule le nombre de jeux qui correspondent à la recherche
-                            index -> // Incrémente jusqu'au nombre précédant
-                        val game = filteredGames[index]
+        }
+
+        if (displayList.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .offset(y = if (isSearchVisible) 60.dp else 0.dp)
+            )
+            { // Fait un for each auto
+                    items(displayList) { game ->
                         GameCard(game, navController, favoriteGames)
                     }
-                }
-            }else{
-                Text(
-                    text = "No match :(",
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .offset(y = 350.dp)
-                        .fillMaxWidth()
-                        .wrapContentSize(Alignment.Center),
-                    textAlign = TextAlign.Center
-                )
             }
-        }else{
-            // Permet l'affichage en liste scrollable de toutes les games cards
-            LazyColumn (modifier = Modifier.padding(innerPadding)){
-                items(IGDB.games.size){
-                        index ->
-                    val game =IGDB.games[index]
-                    GameCard(game, navController, favoriteGames)
-                }
-            }
+        }else{ // Finalement cas où la recherche ne donne pas de résultat ou il n'y a aucun favoris
+            Text(
+                text = "No match :(",
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .offset(y = 350.dp)
+                    .fillMaxWidth()
+                    .wrapContentSize(Alignment.Center),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
+
 
 // ----------------------------- Définition du composable GameScreen -----------------------------
 @OptIn(ExperimentalMaterial3Api::class)
