@@ -143,17 +143,17 @@ fun GameCard(game : Games, navController: NavController, favoriteGames : Mutable
     // Mise en forme de 3 blocs les uns à côté des autres : la couverture du jeu, ses infos et le boutton favori
     Row(verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .padding(15.dp)
+            .padding(5.dp)
             .height(100.dp)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(15.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(Color(184, 184, 187, 255))
             .clickable { navController.navigate(MainActivity.GameRoute(game.id)) }
     ) {
         // Affichage de la couverture du jeu
         AsyncImage(
             model = "https:"+IGDB.covers.find{game.cover==it.id}?.url,
-            contentDescription = "image",
+            contentDescription = "Couverture de "+game.name,
             modifier = Modifier.padding(15.dp)
         )
         // Affichage des infos du jeu
@@ -164,7 +164,7 @@ fun GameCard(game : Games, navController: NavController, favoriteGames : Mutable
                 fontWeight = FontWeight.Bold,
                 style = TextStyle(textDecoration = TextDecoration.Underline)
             )
-            // récupération des genres et mise en forme du
+            // Récupération des genres et mise en forme des genres du jeu
             val mygenres = "Genres : " + IGDB.genres.filter{ it.id in game.genres }.joinToString(", ") { it.name }
             Text(   // Affichage des genres du jeu
                 text = mygenres,
@@ -183,7 +183,7 @@ fun GameCard(game : Games, navController: NavController, favoriteGames : Mutable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set<Long>>) {
-    // Définition des les états des bouttons
+    // Définition des états des bouttons
     var searchText by rememberSaveable { mutableStateOf("") }
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
     var displayFavorite by rememberSaveable { mutableStateOf(false) }
@@ -210,7 +210,7 @@ fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set
                 IconButton(onClick = { displayFavorite = !displayFavorite }) {
                     Icon(
                         imageVector = if(displayFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Appliquer le filtre favoris"
+                        contentDescription = "Afficher uniquement les jeux favoris/Tout afficher"
                     )
                 }
                 IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
@@ -295,7 +295,7 @@ fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableSta
                     IconButton(onClick = {navController.navigateUp()}) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Localized description"
+                            contentDescription = "Retour à la page précédante"
                         )
                     }
                 },
@@ -322,7 +322,7 @@ fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableSta
             // Affichage de la couverture du jeu
             AsyncImage(
                 model = cover,
-                contentDescription = "image",
+                contentDescription = "Couverture de "+title,
                 modifier = Modifier.size(250.dp)
             )
             // Affichage du(des) genre(s) du jeu
