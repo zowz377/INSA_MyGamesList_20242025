@@ -4,7 +4,6 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.insa.mygamelist.R
-import okhttp3.internal.platform.Platform
 
 object IGDB {
 
@@ -44,6 +43,7 @@ object IGDB {
             object : TypeToken<List<Platforms>>() {}.type
         )
         platforms = platformsFromJson
+
     }
 }
 

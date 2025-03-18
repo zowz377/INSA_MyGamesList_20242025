@@ -1,6 +1,7 @@
 package com.insa.mygamelist
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +37,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,7 +67,12 @@ import coil3.compose.AsyncImage
 import com.insa.mygamelist.data.Games
 import com.insa.mygamelist.data.IGDB
 import com.insa.mygamelist.data.Platforms
+import com.insa.mygamelist.ui.screen.GameScreen
+import com.insa.mygamelist.ui.screen.HomeScreen
 import com.insa.mygamelist.ui.theme.MyGamesListTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -74,7 +81,6 @@ class MainActivity : ComponentActivity() {
     object HomeRoute        // Création de l'objet HomeRoute = chemin pout aller au HomeScreen
     @Serializable
     data class GameRoute(val id : Long) // idem sauf pour aller au GameScreen qui correspond à l'id
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,257 +107,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-}
-
-// #################### Définition des composables inclus dans les pages ####################
-// ---------------------------- Définition du composable DisplayLogo ----------------------------
-@Composable
-fun DisplayLogo(platform : Platforms){
-    AsyncImage(
-        model = "https:"+IGDB.platform_logos.find{platform.platform_logo == it.id}?.url,
-        contentDescription = "image",
-        contentScale = ContentScale.FillBounds,
-        modifier = Modifier.padding(7.dp).size(70.dp)
-    )
-}
-
-// --------------------------- Définition du composable FavoriteButton ---------------------------
-@Composable
-fun FavoriteButton(game : Games, favoriteGames: MutableState<Set<Long>>){
-    // Définition de l'état du boutton favori
-    val isFavorite = favoriteGames.value.contains(game.id)
-    IconButton(onClick = {
-        if(isFavorite){
-            favoriteGames.value -= game.id
-        }else{
-            favoriteGames.value += game.id
-        }
-    })
-    {
-        Icon(
-            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-            contentDescription = "Mettre en favori / Enlever des favoris"
-        )
-    }
-}
-
-// ------------------------------ Définition du composable GameCard ------------------------------
-@Composable
-fun GameCard(game : Games, navController: NavController, favoriteGames : MutableState<Set<Long>>){
-    // Mise en forme de 3 blocs les uns à côté des autres : la couverture du jeu, ses infos et le boutton favori
-    Row(verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(5.dp)
-            .height(100.dp)
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(Color(184, 184, 187, 255))
-            .clickable { navController.navigate(MainActivity.GameRoute(game.id)) }
-    ) {
-        // Affichage de la couverture du jeu
-        AsyncImage(
-            model = "https:"+IGDB.covers.find{game.cover==it.id}?.url,
-            contentDescription = "Couverture de "+game.name,
-            modifier = Modifier.padding(15.dp)
-        )
-        // Affichage des infos du jeu
-        Column(modifier = Modifier.padding(10.dp).width(230.dp)){
-            Text(   // Affichage du titre du jeu
-                game.name,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                style = TextStyle(textDecoration = TextDecoration.Underline)
-            )
-            // Récupération des genres et mise en forme des genres du jeu
-            val mygenres = "Genres : " + IGDB.genres.filter{ it.id in game.genres }.joinToString(", ") { it.name }
-            Text(   // Affichage des genres du jeu
-                text = mygenres,
-                fontSize = 20.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis)
-        }
-        // Affichage du boutton favori
-        FavoriteButton(game, favoriteGames)
-    }
-}
-
-// ############################## Définition des différentes pages ##############################
-// ----------------------------- Définition du composable HomeScreen -----------------------------
-@SuppressLint("UseOfNonLambdaOffsetOverload")
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun HomeScreen(navController: NavHostController, favoriteGames: MutableState<Set<Long>>) {
-    // Définition des états des bouttons
-    var searchText by rememberSaveable { mutableStateOf("") }
-    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
-    var displayFavorite by rememberSaveable { mutableStateOf(false) }
-
-    // Filtre de recherche par nom, genre et plateforme compatible
-    val filteredGames = IGDB.games.filter { game ->
-            game.name.contains(searchText, ignoreCase = true) ||
-                    IGDB.genres
-                        .filter {game.genres.contains(it.id)}
-                        .find {it.name.contains(searchText, ignoreCase = true)} != null ||
-                    IGDB.platforms
-                        .filter { game.platforms.contains(it.id)}
-                        .find {it.name.contains(searchText, ignoreCase = true)} != null
-    }
-
-    Scaffold(topBar = {
-        // Paramètrage de la top bar
-        TopAppBar(
-            colors = topAppBarColors(
-                containerColor = Color(138, 239, 110, 255),
-                titleContentColor = Color.Black,),
-            title = { Text("My Games List") },
-            actions = {
-                IconButton(onClick = { displayFavorite = !displayFavorite }) {
-                    Icon(
-                        imageVector = if(displayFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Afficher uniquement les jeux favoris/Tout afficher"
-                    )
-                }
-                IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
-                    Icon(
-                        imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
-                        contentDescription = "Afficher/Cacher la recherche"
-                    )
-                }
-            }
-        )
-    }, modifier = Modifier.fillMaxSize()) { innerPadding ->
-        // Sélection des jeux à afficher selon les filtres
-        val displayList = when {
-            isSearchVisible && searchText.isNotEmpty() && displayFavorite ->
-                filteredGames.filter { it.id in favoriteGames.value } // Filtre favoris + Recherche
-            isSearchVisible && searchText.isNotEmpty() ->
-                filteredGames // Pas de filtre favoris + Recherche
-            displayFavorite ->
-                IGDB.games.filter { it.id in favoriteGames.value } // Filtre favoris + Pas Recherche
-            else ->
-                IGDB.games // Pas de filtre favoris + Pas Recherche
-        }
-        // Affichage conditionnel de la barre de recherche
-        if (isSearchVisible) {
-            TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = { Text("Rechercher...") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(innerPadding)
-            )
-        }
-
-        if (displayList.isNotEmpty()) {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .offset(y = if (isSearchVisible) 60.dp else 0.dp)
-            )
-            { // Fait un for each auto
-                    items(displayList) { game ->
-                        GameCard(game, navController, favoriteGames)
-                    }
-            }
-        }else{ // Finalement cas où la recherche ne donne pas de résultat ou il n'y a aucun favoris
-            Text(
-                text = "No match :(",
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .offset(y = 350.dp)
-                    .fillMaxWidth()
-                    .wrapContentSize(Alignment.Center),
-                textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-
-// ----------------------------- Définition du composable GameScreen -----------------------------
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun GameScreen(id: Long, navController: NavController, favoriteGames: MutableState<Set<Long>>) {
-    // Définition de tous les éléments utilisés dans la page
-    val game = IGDB.games.find{id==it.id}
-    val title = game?.name ?: "Unfound"
-    val cover = "https:"+IGDB.covers.find{game?.cover==it.id}?.url
-    val genre = IGDB.genres.filter{ it.id in (game?.genres ?: listOf(String))}.joinToString(", ") {it.name}
-    val platforms = IGDB.platforms.filter{ it.id in game?.platforms!!}
-    val summary = game?.summary ?: ""
-
-    Scaffold(
-        // Paramètrage de la top bar
-        topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                containerColor = Color(138, 239, 110, 255),
-                titleContentColor = Color.Black,),
-                title = { Text(title) },
-                navigationIcon = {
-                    IconButton(onClick = {navController.navigateUp()}) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Retour à la page précédante"
-                        )
-                    }
-                },
-                actions = { IGDB.games.find{id==it.id}?.let { FavoriteButton(it, favoriteGames) } }
-            )
-        },
-        modifier = Modifier.fillMaxSize())
-    { innerPadding ->
-    // Paramètrage du reste de la page
-        Column (horizontalAlignment = Alignment.CenterHorizontally){
-            // Affichage du titre du jeu
-            Text(text = title,
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .padding(15.dp)
-                    .width(250.dp)
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold,
-                style = TextStyle(textDecoration = TextDecoration.Underline)
-            )
-
-            // Affichage de la couverture du jeu
-            AsyncImage(
-                model = cover,
-                contentDescription = "Couverture de "+title,
-                modifier = Modifier.size(250.dp)
-            )
-            // Affichage du(des) genre(s) du jeu
-            Text(
-                text = genre,
-                modifier = Modifier
-                    .padding(15.dp)
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                fontSize = 15.sp,
-                fontStyle = FontStyle.Italic
-            )
-            // Affichage de toutes les plateformes compatibles avec le jeu
-            LazyRow {
-                items(platforms.size){ // Calcule le nombre de jeux
-                    index -> // Incrémente jusqu'au nombre précédant
-                    val platform = platforms[index]
-                    DisplayLogo(platform)
-                }
-            }
-            // Affichage du résumé du jeu
-            Text(
-                text = summary,
-                modifier = Modifier
-                    .padding(15.dp)
-                    .fillMaxWidth(),
-                textAlign = TextAlign.Left,
-                fontSize = 20.sp
-            )
         }
     }
 }
