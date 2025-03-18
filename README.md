@@ -64,8 +64,7 @@ Le but de cette séance est d'implémenter une fonction de mise en favori des je
  - Un toucher sur cete icône change l’état “favori” du jeu.
  - L’état des jeux “favoris” est cohérent entre la liste des jeux et les détails de celui-ci (i.e. changer l’état “favori” d’un jeu dans le détail de celui-ci se reflète dans la liste).
 
-Toutes ces fonctions sont valides.
-Nous avons choisi de pouvoir afficher la liste des favoris par un toucher de l'icone coeur sur l'App Bar du Home Screen.
+Toutes ces fonctions sont validées.
 
 ## Séance 6 - TP Facultatif - Passage à une API en ligne
 
@@ -84,5 +83,23 @@ curl -X POST \
     -H 'Authorization: Bearer *token* ' \
     -d 'fields name, url; limit 500;' | jq | bat -l json
 ```
+Nous ne sommes pas allées plus loin dans l'intégration de l'API.
+Nous avons préféré améliorer notre code et ajouter des fonctionnalités supplémentaires.
 
-## TP Bonus
+## Bonus et améliorations
+
+### Amélioration de la fonction favori
+Nous voulions pouvoir faire un filtre qui afficherait tous les jeux marqués comme favoris.
+Nous avons donc intégré une icone coeur sur l'App Bar du Home Screen, qui affiche une fois cliquée tous les favoris.
+Si la fonction recherche est activée, ainsi que le filtre favoris, la recherche se concentre donc uniquement sur ces derniers.
+Si aucun jeu n'est favori, un clic sur le coeur affiche un écran “No match :(”.
+
+### Swipe entre les jeux
+Nous avons intégré le swipe entre les affichages de GameScreen.  
+Lorsqu'on clique sur un jeu dans la liste affichée à l'écran, on arrive sur le GameScreen correspondant au jeu en question.
+En swipant vers la gauche ou la droite, on arrive sur le GameScreen du jeu respectivement au dessus ou en dessous du jeu initial dans la liste.
+Ainsi, on peut par de simples swipes se déplacer dans les GameScreens de la liste de jeu.  
+La top bar est bien mise à jour à chaque changement de GameScreen.  
+Cette fonctionnalité respecte les filtres éventuels et/ou la recherche en cours.  
+Pour revenir à la liste de jeux, il faut donc maintenant cliquer uniquement sur la flèche de retour de l'application ou du téléphone.
+
