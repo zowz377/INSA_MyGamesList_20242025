@@ -54,7 +54,7 @@ fun GameDetails(id: Long) {
         // Affichage de la couverture du jeu
         AsyncImage(
             model = cover,
-            contentDescription = "Couverture de $name",
+            contentDescription = "Couverture de "+name,
             modifier = Modifier
                 .size(250.dp)
                 .padding(10.dp)

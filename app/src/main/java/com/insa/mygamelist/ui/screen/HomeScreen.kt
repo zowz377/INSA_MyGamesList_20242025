@@ -50,9 +50,6 @@ fun HomeScreen(navController: NavHostController,
     Scaffold(topBar = {
         // Paramètrage de la top bar
         TopAppBar(
-            colors = topAppBarColors(
-                containerColor = Color(138, 239, 110, 255),
-                titleContentColor = Color.Black,),
             title = { Text("My Games List") },
             actions = {
                 IconButton(onClick = { toggleIsFavoriteSelected () }) {

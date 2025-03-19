@@ -41,9 +41,6 @@ fun GameScreen(id: Long,
         // Paramètrage de la top bar
         topBar = {
             TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = Color(138, 239, 110, 255),
-                    titleContentColor = Color.Black,),
                 title = { Text(displayList[pagerState.currentPage].name) },
                 navigationIcon = {
                     IconButton(onClick = {navController.navigateUp()}) {

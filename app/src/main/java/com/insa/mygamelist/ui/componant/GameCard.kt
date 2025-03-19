@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -40,14 +42,16 @@ fun GameCard(game : Games,
             .height(100.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(229,224,232))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable { navController.navigate(MainActivity.GameRoute(game.id)) }
     ) {
         // Affichage de la couverture du jeu
         AsyncImage(
             model = "https:"+ IGDB.covers.find{game.cover==it.id}?.url,
             contentDescription = "Couverture de "+game.name,
-            modifier = Modifier.padding(15.dp)
+            modifier = Modifier
+                .size(90.dp)
+                .padding(5.dp)
         )
         // Affichage des infos du jeu
         Column(modifier = Modifier.padding(10.dp).width(230.dp)){
