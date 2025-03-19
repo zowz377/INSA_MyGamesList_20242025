@@ -104,3 +104,14 @@ La top bar est bien mise à jour à chaque changement de GameScreen.
 Cette fonctionnalité respecte les filtres éventuels et/ou la recherche en cours.  
 Pour revenir à la liste de jeux, il faut donc maintenant cliquer uniquement sur la flèche de retour de l'application ou du téléphone.
 
+### Thème sombre
+Depuis le début du projet, nous travaillons uniquement sur la version "thème clair" de l'application. 
+Nous avons donc décidé de nous attaquer également à sa version en "thème sombre". 
+Nous nous sommes aperçues que la version actuelle avec le thème dynamique n'était pas très esthétique. 
+Nous l'avons donc retiré et remplacé par des thèmes clairs et sombres faits par nos soins. 
+Maintenant, les deux thèmes sont à notre goût et toutes les couleurs en dur sont stockées au même endroit.
+
+### Architecture
+Pour finir, nous avons décidé de faire une meilleure organisation de notre code. 
+Au départ, toutes les fonctions et composables étaient dans le même fichier. 
+Maintenant, ils sont tous dans des fichiers différents, rangés dans des packages leur correspondant.

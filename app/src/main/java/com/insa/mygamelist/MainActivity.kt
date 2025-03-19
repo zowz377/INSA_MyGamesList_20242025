@@ -95,11 +95,11 @@ class MainActivity : ComponentActivity() {
             // Création d'une liste des favoris qui est passée en paramètre de toutes nos pages
             // Stockés via leurs id
             val favoriteGames = remember { mutableStateOf(setOf<Long>()) }
-
+            // Zone de recherche d'un jeu
             var searchText by rememberSaveable { mutableStateOf("") }
-
+            // Mémorisation de l'état du bouton de recherche
             var isSearchVisible by rememberSaveable { mutableStateOf(false) }
-
+            // Mémorisation de l'état du bouton de favoris
             var isFavoriteSelected by rememberSaveable { mutableStateOf(false) }
 
             // Filtre de recherche par nom, genre et plateforme compatible
