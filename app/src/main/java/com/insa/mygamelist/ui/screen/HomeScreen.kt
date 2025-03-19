@@ -23,40 +23,29 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.insa.mygamelist.data.IGDB
+import com.insa.mygamelist.data.Games
 import com.insa.mygamelist.ui.componant.GameCard
 
 @SuppressLint("UseOfNonLambdaOffsetOverload")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController,
-               favoriteGames: MutableState<Set<Long>>)
+               favoriteGames: MutableState<Set<Long>>,
+               searchText: String,
+               setSearchText: (String) -> Unit,
+               isFavoriteSelected: Boolean,
+               toggleIsFavoriteSelected: () -> Unit,
+               displayList: List<Games>,
+               isSearchVisible: Boolean,
+               toggleIsSearchVisible: () -> Unit
+               )
 {
-    // Définition des états des bouttons
-    var searchText by rememberSaveable { mutableStateOf("") }
-    var isSearchVisible by rememberSaveable { mutableStateOf(false) }
-    var displayFavorite by rememberSaveable { mutableStateOf(false) }
-
-    // Filtre de recherche par nom, genre et plateforme compatible
-    val filteredGames = IGDB.games.filter { game ->
-        game.name.contains(searchText, ignoreCase = true) ||
-                IGDB.genres
-                    .filter {game.genres.contains(it.id)}
-                    .find {it.name.contains(searchText, ignoreCase = true)} != null ||
-                IGDB.platforms
-                    .filter { game.platforms.contains(it.id)}
-                    .find {it.name.contains(searchText, ignoreCase = true)} != null
-    }
 
     Scaffold(topBar = {
         // Paramètrage de la top bar
@@ -66,13 +55,13 @@ fun HomeScreen(navController: NavHostController,
                 titleContentColor = Color.Black,),
             title = { Text("My Games List") },
             actions = {
-                IconButton(onClick = { displayFavorite = !displayFavorite }) {
+                IconButton(onClick = { toggleIsFavoriteSelected () }) {
                     Icon(
-                        imageVector = if(displayFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        imageVector = if(isFavoriteSelected) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Afficher uniquement les jeux favoris/Tout afficher"
                     )
                 }
-                IconButton(onClick = { isSearchVisible = !isSearchVisible }) {
+                IconButton(onClick = { toggleIsSearchVisible () }) {
                     Icon(
                         imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
                         contentDescription = "Afficher/Cacher la recherche"
@@ -81,22 +70,12 @@ fun HomeScreen(navController: NavHostController,
             }
         )
     }, modifier = Modifier.fillMaxSize()) { innerPadding ->
-        // Sélection des jeux à afficher selon les filtres
-        val displayList = when {
-            isSearchVisible && searchText.isNotEmpty() && displayFavorite ->
-                filteredGames.filter { it.id in favoriteGames.value } // Filtre favoris + Recherche
-            isSearchVisible && searchText.isNotEmpty() ->
-                filteredGames // Pas de filtre favoris + Recherche
-            displayFavorite ->
-                IGDB.games.filter { it.id in favoriteGames.value } // Filtre favoris + Pas Recherche
-            else ->
-                IGDB.games // Pas de filtre favoris + Pas Recherche
-        }
+
         // Affichage conditionnel de la barre de recherche
         if (isSearchVisible) {
             TextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = { setSearchText(it) },
                 placeholder = { Text("Rechercher...") },
                 modifier = Modifier
                     .fillMaxWidth()

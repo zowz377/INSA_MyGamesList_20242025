@@ -1,6 +1,7 @@
 # Programmation mobile - Projet Android Studio
 
-Ce projet a été réalisé dans le cadre du cours de Programmation mobile par Jeanne Bisson et Zoé Le Barillec. 
+Ce projet a été réalisé dans le cadre du cours de Programmation mobile par Jeanne Bisson et Zoé Le Barillec.  
+Le but de ce projet est de créer une application mobile sous AndroidStudio permettant de gérer une base de données de jeux vidéo.  
 
 ## Séance 1 - Prise en main d'Android studio
 Durant cette première séance, l'objectif est de réaliser la page d'accueil de notre application. Celle-ci doit contenir :

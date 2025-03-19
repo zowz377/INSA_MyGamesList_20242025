@@ -31,7 +31,7 @@ import com.insa.mygamelist.data.IGDB
 @Composable
 fun GameCard(game : Games,
              navController: NavController,
-             favoriteGames : MutableState<Set<Long>>
+             favoriteGames : MutableState<Set<Long>>,
 ){
     // Mise en forme de 3 blocs les uns à côté des autres : la couverture du jeu, ses infos et le boutton favori
     Row(verticalAlignment = Alignment.CenterVertically,
@@ -40,7 +40,7 @@ fun GameCard(game : Games,
             .height(100.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(184, 184, 187, 255))
+            .background(Color(229,224,232))
             .clickable { navController.navigate(MainActivity.GameRoute(game.id)) }
     ) {
         // Affichage de la couverture du jeu

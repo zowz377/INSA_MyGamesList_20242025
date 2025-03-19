@@ -96,14 +96,55 @@ class MainActivity : ComponentActivity() {
             // Stockés via leurs id
             val favoriteGames = remember { mutableStateOf(setOf<Long>()) }
 
+            var searchText by rememberSaveable { mutableStateOf("") }
+
+            var isSearchVisible by rememberSaveable { mutableStateOf(false) }
+
+            var isFavoriteSelected by rememberSaveable { mutableStateOf(false) }
+
+            // Filtre de recherche par nom, genre et plateforme compatible
+            val filteredGames = IGDB.games.filter { game ->
+                game.name.contains(searchText, ignoreCase = true) ||
+                        IGDB.genres
+                            .filter {game.genres.contains(it.id)}
+                            .find {it.name.contains(searchText, ignoreCase = true)} != null ||
+                        IGDB.platforms
+                            .filter { game.platforms.contains(it.id)}
+                            .find {it.name.contains(searchText, ignoreCase = true)} != null
+            }
+
+            // Sélection des jeux à afficher selon les filtres recherche et favoris
+            val displayList = when {
+                isSearchVisible && searchText.isNotEmpty() && isFavoriteSelected ->
+                    filteredGames.filter { it.id in favoriteGames.value } // Filtre favoris + Recherche
+                isSearchVisible && searchText.isNotEmpty() ->
+                    filteredGames // Pas de filtre favoris + Recherche
+                isFavoriteSelected ->
+                    IGDB.games.filter { it.id in favoriteGames.value } // Filtre favoris + Pas Recherche
+                else ->
+                    IGDB.games // Pas de filtre favoris + Pas Recherche
+            }
+
             MyGamesListTheme {
                 NavHost(navController, startDestination = HomeRoute) {  // Chemin init = HomeRoute
                     composable<HomeRoute> {     // La HomeRoute nous emmène sur le HomeScreen
-                        HomeScreen(navController, favoriteGames)
+                        HomeScreen(navController = navController,
+                            favoriteGames = favoriteGames,
+                            searchText = searchText,
+                            setSearchText = {newSearchText -> searchText = newSearchText},
+                            isFavoriteSelected = isFavoriteSelected,
+                            toggleIsFavoriteSelected = { isFavoriteSelected = !isFavoriteSelected },
+                            displayList = displayList,
+                            isSearchVisible = isSearchVisible,
+                            toggleIsSearchVisible = { isSearchVisible = !isSearchVisible }
+                            )
                     }
                     composable<GameRoute> { backStackEntry ->
                         val route = backStackEntry.toRoute<GameRoute>()
-                        GameScreen(route.id, navController, favoriteGames)
+                        GameScreen(route.id,
+                            navController,
+                            favoriteGames,
+                            displayList)
                     }
                 }
             }
